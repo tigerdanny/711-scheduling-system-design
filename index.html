@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7-ELEVEN 排班系統 | 系統設計規劃</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #E8002D;
+    --green: #007B40;
+    --orange: #F5821F;
+    --bg: #0D0D0D;
+    --surface: #161616;
+    --surface2: #1E1E1E;
+    --border: #2A2A2A;
+    --text: #F0F0F0;
+    --text-muted: #888;
+    --accent: #E8002D;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    padding: 80px 48px 60px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 80% at 80% 50%, rgba(232,0,45,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, rgba(0,123,64,0.06) 0%, transparent 60%);
+  }
+  .hero-stripe {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--red) 33.33%, var(--green) 33.33%, var(--green) 66.66%, var(--orange) 66.66%);
+  }
+  .hero-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--red);
+    border: 1px solid var(--red);
+    padding: 4px 12px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    max-width: 800px;
+  }
+  .hero h1 span { color: var(--red); }
+  .hero-sub {
+    margin-top: 16px;
+    font-size: 15px;
+    color: var(--text-muted);
+    max-width: 600px;
+  }
+  .hero-meta {
+    margin-top: 32px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .meta-item strong { color: var(--text); font-size: 14px; display: block; }
+
+  /* NAV */
+  .toc {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(13,13,13,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .toc a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 14px 16px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .toc a:hover { color: var(--text); border-bottom-color: var(--red); }
+
+  /* LAYOUT */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
+
+  /* SECTIONS */
+  .section {
+    padding: 72px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 32px;
+    letter-spacing: -0.5px;
+  }
+  .section-title span { color: var(--red); }
+
+  /* ROLE CARDS */
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .role-card {
+    background: var(--surface);
+    padding: 32px;
+    transition: background 0.2s;
+  }
+  .role-card:hover { background: var(--surface2); }
+  .role-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  .role-icon.admin { background: rgba(232,0,45,0.15); }
+  .role-icon.owner { background: rgba(0,123,64,0.15); }
+  .role-icon.staff { background: rgba(245,130,31,0.15); }
+  .role-card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .role-card p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .perm-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .perm-list li {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .perm-list li::before {
+    content: '→';
+    color: var(--red);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  /* DB SCHEMA */
+  .schema-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--red);
+    padding: 24px;
+  }
+  .table-card h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--red);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .field-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-name { font-family: 'JetBrains Mono', monospace; color: var(--text); }
+  .field-type { color: var(--text-muted); font-size: 11px; }
+  .badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .badge.pk { background: rgba(232,0,45,0.2); color: var(--red); }
+  .badge.fk { background: rgba(0,123,64,0.2); color: #00c96b; }
+  .badge.idx { background: rgba(245,130,31,0.2); color: var(--orange); }
+
+  /* SHIFT CARDS */
+  .shift-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .shift-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .shift-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+  }
+  .shift-card.morning::before { background: #F5821F; }
+  .shift-card.evening::before { background: #007B40; }
+  .shift-card.night::before { background: #3B6FDB; }
+  .shift-card.temp::before { background: #888; }
+  .shift-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+  .shift-name {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .shift-hours {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* RULE CARDS */
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .rule-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+  }
+  .rule-severity {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+  .severity-error { background: rgba(232,0,45,0.2); color: var(--red); }
+  .severity-warn { background: rgba(245,130,31,0.2); color: var(--orange); }
+  .rule-card h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    padding-right: 80px;
+  }
+  .rule-card p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .rule-ref {
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+
+  /* WIREFRAME PREVIEW */
+  .wireframe {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .wf-bar {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .wf-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .wf-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 8px;
+  }
+  .wf-body { padding: 24px; }
+  .wf-calendar {
+    display: grid;
+    grid-template-columns: 120px repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .wf-cell {
+    background: var(--bg);
+    padding: 8px;
+    min-height: 40px;
+  }
+  .wf-cell.header {
+    background: var(--surface2);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    font-size: 10px;
+  }
+  .wf-cell.day-header {
+    background: var(--surface2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    font-size: 10px;
+    gap: 2px;
+  }
+  .wf-cell.day-header .date { color: var(--text); font-size: 14px; font-weight: 700; }
+  .wf-shift {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 1px 0;
+  }
+  .wf-shift.m { background: rgba(245,130,31,0.2); color: var(--orange); }
+  .wf-shift.e { background: rgba(0,123,64,0.2); color: #00c96b; }
+  .wf-shift.n { background: rgba(59,111,219,0.2); color: #7aadff; }
+  .wf-shift.err { background: rgba(232,0,45,0.2); color: var(--red); border: 1px solid rgba(232,0,45,0.4); }
+  .wf-staff { font-size: 11px; color: var(--text); }
+
+  /* TECH STACK */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .tech-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .tech-icon {
+    width: 36px; height: 36px;
+    background: var(--surface2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .tech-item h4 { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .tech-item p { font-size: 11px; color: var(--text-muted); }
+
+  /* PHASES */
+  .phase-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+  }
+  .phase-item {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    align-items: start;
+    gap: 24px;
+    padding: 28px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    transition: background 0.2s;
+  }
+  .phase-item:last-child { border-bottom: none; }
+  .phase-item:hover { background: var(--surface2); }
+  .phase-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--border);
+    line-height: 1;
+  }
+  .phase-item h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .phase-item p { font-size: 13px; color: var(--text-muted); }
+  .phase-tasks {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .phase-task {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .phase-task::before { content: '□'; color: var(--border); }
+  .phase-dur {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 2px;
+    align-self: flex-start;
+    margin-top: 4px;
+  }
+
+  /* ALERT DEMO */
+  .alert-demo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-top: 16px;
+  }
+  .alert-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    align-items: flex-start;
+    font-size: 13px;
+  }
+  .alert-item.error {
+    background: rgba(232,0,45,0.08);
+    border: 1px solid rgba(232,0,45,0.3);
+  }
+  .alert-item.warn {
+    background: rgba(245,130,31,0.08);
+    border: 1px solid rgba(245,130,31,0.3);
+  }
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert-text strong { display: block; font-size: 13px; margin-bottom: 3px; }
+  .alert-text span { font-size: 12px; color: var(--text-muted); }
+
+  /* ACCORDION */
+  details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  summary {
+    padding: 16px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none;
+    user-select: none;
+  }
+  summary::after {
+    content: '+';
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--red);
+    font-size: 18px;
+  }
+  details[open] summary::after { content: '−'; }
+  .details-body { padding: 0 20px 20px; font-size: 13px; color: var(--text-muted); line-height: 1.8; }
+
+  /* FOOTER */
+  footer {
+    padding: 48px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+  footer strong { color: var(--text); }
+
+  @media (max-width: 768px) {
+    .hero { padding: 60px 24px 40px; }
+    .container { padding: 0 24px; }
+    .toc { padding: 0 24px; }
+    .phase-item { grid-template-columns: 48px 1fr; }
+    .phase-dur { display: none; }
+    footer { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-stripe"></div>
+  <div class="container" style="position:relative">
+    <div class="hero-tag">System Design v1.0</div>
+    <h1>7-ELEVEN<br><span>排班系統</span>設計規劃</h1>
+    <p class="hero-sub">以加盟主為核心的多租戶排班平台，內建勞基法自動驗證引擎</p>
+    <div class="hero-meta">
+      <div class="meta-item"><strong>3</strong>角色層級</div>
+      <div class="meta-item"><strong>8+</strong>資料表</div>
+      <div class="meta-item"><strong>9</strong>勞基法規則</div>
+      <div class="meta-item"><strong>4</strong>班別類型</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="toc">
+  <a href="#roles">角色設計</a>
+  <a href="#schema">資料架構</a>
+  <a href="#shifts">班別設計</a>
+  <a href="#schedule">排班介面</a>
+  <a href="#rules">勞基法驗證</a>
+  <a href="#tech">技術選型</a>
+  <a href="#phases">開發計劃</a>
+  <a href="#faq">FAQ</a>
+</nav>
+
+<!-- ROLES -->
+<section class="section" id="roles">
+  <div class="container">
+    <div class="section-label">01 / ARCHITECTURE</div>
+    <h2 class="section-title">角色與<span>權限</span>設計</h2>
+    <div class="role-grid">
+      <div class="role-card">
+        <div class="role-icon admin">🔧</div>
+        <h3>系統管理員</h3>
+        <p>由總部或IT人員操作，管理所有加盟主帳號</p>
+        <ul class="perm-list">
+          <li>建立 / 停用加盟主帳號</li>
+          <li>查看所有加盟主資料</li>
+          <li>系統參數設定</li>
+          <li>查看全系統日誌</li>
+          <li>重設任何帳號密碼</li>
+        </ul>
+      </div>
+      <div class="role-card">
+        <div class="role-icon owner">🏪</div>
+        <h3>加盟主</h3>
+        <p>管理自己名下的所有分店與員工</p>
+        <ul class="perm-list">
+          <li>管理旗下分店資料</li>
+          <li>建立 / 管理員工資料</li>
+          <li>設定班別（固定/臨時）</li>
+          <li>排定每週班表</li>
+          <li>查看排班衝突警告</li>
+          <li>匯出班表 PDF / Excel</li>
+        </ul>
+      </div>
+      <div class="role-card">
+        <div class="role-icon staff">👤</div>
+        <h3>員工（選配）</h3>
+        <p>未來可擴充的自助查詢功能</p>
+        <ul class="perm-list">
+          <li>查看個人班表</li>
+          <li>提出請假申請</li>
+          <li>查看同班同事資訊</li>
+          <li>接收班表通知</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEMA -->
+<section class="section" id="schema">
+  <div class="container">
+    <div class="section-label">02 / DATABASE</div>
+    <h2 class="section-title">資料庫<span>架構</span>設計</h2>
+    <div class="schema-grid">
+
+      <div class="table-card">
+        <h3>👤 users</h3>
+        <div class="field-row"><span class="field-name">id</span><span><span class="badge pk">PK</span></span></div>
+        <div class="field-row"><span class="field-name">username</span><span class="field-type">VARCHAR(50)</span></div>
+        <div class="field-row"><span class="field-name">password_hash</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">role</span><span class="field-type">ENUM(admin, owner)</span></div>
+        <div class="field-row"><span class="field-name">email</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">is_active</span><span class="field-type">BOOLEAN</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">TIMESTAMP</span></div>
+      </div>
+
+      <div class="table-card">
+        <h3>🏪 stores</h3>
+        <div class="field-row"><span class="field-name">id</span><span><span class="badge pk">PK</span></span></div>
+        <div class="field-row"><span class="field-name">store_code</span><span><span class="badge idx">UNIQUE</span></span></div>
+        <div class="field-row"><span class="field-name">store_name</span><span class="field-type">VARCHAR(100)</span></div>
+        <div class="field-row"><span class="field-name">owner_id</span><span><span class="badge fk">FK→users</span></span></div>
+        <div class="field-row"><span class="field-name">address</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">is_active</span><span class="field-type">BOOLEAN</span></div>
+      </div>
+
+      <div class="table-card">
+        <h3>👥 employees</h3>
+        <div class="field-row"><span class="field-name">id</span><span><span class="badge pk">PK</span></span></div>
+        <div class="field-row"><span class="field-name">emp_code</span><span><span class="badge idx">UNIQUE</span></span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">VARCHAR(50)</span></div>
+        <div class="field-row"><span class="field-name">primary_store_id</span><span><span class="badge fk">FK→stores</span></span></div>
+        <div class="field-row"><span class="field-name">owner_id</span><span><span class="badge fk">FK→users</span></span></div>
+        <div class="field-row"><span class="field-name">phone</span><span class="field-type">VARCHAR(20)</span></div>
+        <div class="field-row"><span class="field-name">hire_date</span><span class="field-type">DATE</span></div>
+        <div class="field-row"><span class="field-name">is_active</span><span class="field-type">BOOLEAN</span></div>
+      </div>
+
+      <div class="table-card">
+        <h3>⏰ shift_types</h3>
+        <div class="field-row"><span class="field-name">id</span><span><span class="badge pk">PK</span></span></div>
+        <div class="field-row"><span class="field-name">owner_id</span><span><span class="badge fk">FK→users</span></span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">VARCHAR(50)</span></div>
+        <div class="field-row"><span class="field-name">start_time</span><span class="field-type">TIME</span></div>
+        <div class="field-row"><span class="field-name">end_time</span><span class="field-type">TIME</span></div>
+        <div class="field-row"><span class="field-name">is_overnight</span><span class="field-type">BOOLEAN</span></div>
+        <div class="field-row"><span class="field-name">is_fixed</span><span class="field-type">BOOLEAN</span></div>
+        <div class="field-row"><span class="field-name">color_code</span><span class="field-type">VARCHAR(7)</span></div>
+      </div>
+
+      <div class="table-card">
+        <h3>📅 schedules</h3>
+        <div class="field-row"><span class="field-name">id</span><span><span class="badge pk">PK</span></span></div>
+        <div class="field-row"><span class="field-name">employee_id</span><span><span class="badge fk">FK→employees</span></span></div>
+        <div class="field-row"><span class="field-name">store_id</span><span><span class="badge fk">FK→stores</span></span></div>
+        <div class="field-row"><span class="field-name">shift_type_id</span><span><span class="badge fk">FK→shift_types</span></span></div>
+        <div class="field-row"><span class="field-name">work_date</span><span class="field-type">DATE</span></div>
+        <div class="field-row"><span class="field-name">actual_start</span><span class="field-type">DATETIME</span></div>
+        <div class="field-row"><span class="field-name">actual_end</span><span class="field-type">DATETIME</span></div>
+        <div class="field-row"><span class="field-name">note</span><span class="field-type">TEXT</span></div>
+      </div>
+
+      <div class="table-card">
+        <h3>📆 schedule_weeks</h3>
+        <div class="field-row"><span class="field-name">id</span><span><span class="badge pk">PK</span></span></div>
+        <div class="field-row"><span class="field-name">store_id</span><span><span class="badge fk">FK→stores</span></span></div>
+        <div class="field-row"><span class="field-name">week_start</span><span class="field-type">DATE (週一)</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">ENUM(draft, published)</span></div>
+        <div class="field-row"><span class="field-name">created_by</span><span class="field-type">FK→users</span></div>
+        <div class="field-row"><span class="field-name">published_at</span><span class="field-type">TIMESTAMP</span></div>
+      </div>
+
+      <div class="table-card">
+        <h3>⚠️ schedule_violations</h3>
+        <div class="field-row"><span class="field-name">id</span><span><span class="badge pk">PK</span></span></div>
+        <div class="field-row"><span class="field-name">schedule_id</span><span><span class="badge fk">FK→schedules</span></span></div>
+        <div class="field-row"><span class="field-name">employee_id</span><span><span class="badge fk">FK→employees</span></span></div>
+        <div class="field-row"><span class="field-name">rule_code</span><span class="field-type">VARCHAR(30)</span></div>
+        <div class="field-row"><span class="field-name">severity</span><span class="field-type">ENUM(error, warn)</span></div>
+        <div class="field-row"><span class="field-name">message</span><span class="field-type">TEXT</span></div>
+      </div>
+
+      <div class="table-card">
+        <h3>🗓️ holidays</h3>
+        <div class="field-row"><span class="field-name">id</span><span><span class="badge pk">PK</span></span></div>
+        <div class="field-row"><span class="field-name">holiday_date</span><span><span class="badge idx">UNIQUE</span></span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">VARCHAR(50)</span></div>
+        <div class="field-row"><span class="field-name">type</span><span class="field-type">ENUM(national, compensatory)</span></div>
+        <div class="field-row"><span class="field-name">year</span><span class="field-type">SMALLINT</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SHIFTS -->
+<section class="section" id="shifts">
+  <div class="container">
+    <div class="section-label">03 / SHIFT TYPES</div>
+    <h2 class="section-title">班別<span>規格</span>設計</h2>
+    <div class="shift-grid">
+      <div class="shift-card morning">
+        <div class="shift-time">07–15</div>
+        <div class="shift-name">早班</div>
+        <div class="shift-hours">8小時 ｜ 固定班 ｜ is_overnight=false</div>
+      </div>
+      <div class="shift-card evening">
+        <div class="shift-time">15–23</div>
+        <div class="shift-name">晚班</div>
+        <div class="shift-hours">8小時 ｜ 固定班 ｜ is_overnight=false</div>
+      </div>
+      <div class="shift-card night">
+        <div class="shift-time">23–07</div>
+        <div class="shift-name">大夜班</div>
+        <div class="shift-hours">8小時 ｜ 固定班 ｜ is_overnight=true ⚠️</div>
+      </div>
+      <div class="shift-card temp">
+        <div class="shift-time">自訂</div>
+        <div class="shift-name">臨時班</div>
+        <div class="shift-hours">自行輸入起訖時間 ｜ 可建多筆 ｜ 命名自訂</div>
+      </div>
+    </div>
+    <div style="margin-top:16px; background:var(--surface); border:1px solid var(--border); padding:20px;">
+      <p style="font-size:13px; color:var(--text-muted);">⚠️ <strong style="color:var(--text)">大夜班注意事項：</strong>
+      大夜班 <code style="color:var(--orange); font-family:'JetBrains Mono',monospace">23:00 → 07:00+1</code>，
+      actual_end 需存隔天日期。排班引擎計算連續工作天數時須特別處理跨日邏輯，
+      並在排班 UI 上顯示跨日標記。臨時班的結束時間若過午夜亦同。</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEDULE UI -->
+<section class="section" id="schedule">
+  <div class="container">
+    <div class="section-label">04 / UI WIREFRAME</div>
+    <h2 class="section-title">排班介面<span>設計</span>概覽</h2>
+    <div class="wireframe">
+      <div class="wf-bar">
+        <div class="wf-dot" style="background:#E8002D"></div>
+        <div class="wf-dot" style="background:#F5821F"></div>
+        <div class="wf-dot" style="background:#007B40"></div>
+        <span class="wf-title">排班管理 — 2025 W12｜明善店 (1234)｜草稿中</span>
+      </div>
+      <div class="wf-body">
+        <div class="wf-calendar">
+          <!-- Header -->
+          <div class="wf-cell day-header" style="background:#1E1E1E">員工</div>
+          <div class="wf-cell day-header"><span class="date">17</span>週一</div>
+          <div class="wf-cell day-header"><span class="date">18</span>週二</div>
+          <div class="wf-cell day-header"><span class="date">19</span>週三</div>
+          <div class="wf-cell day-header" style="background:rgba(245,130,31,0.08)"><span class="date">20</span>週四</div>
+          <div class="wf-cell day-header"><span class="date">21</span>週五</div>
+          <div class="wf-cell day-header" style="background:rgba(59,111,219,0.05)"><span class="date">22</span>週六</div>
+          <div class="wf-cell day-header" style="background:rgba(59,111,219,0.05)"><span class="date">23</span>週日</div>
+          <!-- Row 1 -->
+          <div class="wf-cell header">陳○○</div>
+          <div class="wf-cell"><span class="wf-shift m">早</span></div>
+          <div class="wf-cell"><span class="wf-shift m">早</span></div>
+          <div class="wf-cell"><span class="wf-shift e">晚</span></div>
+          <div class="wf-cell">—</div>
+          <div class="wf-cell"><span class="wf-shift m">早</span></div>
+          <div class="wf-cell"><span class="wf-shift m">早</span></div>
+          <div class="wf-cell"><span class="wf-shift m">早</span></div>
+          <!-- Row 2 -->
+          <div class="wf-cell header">林○○</div>
+          <div class="wf-cell"><span class="wf-shift n">大夜</span></div>
+          <div class="wf-cell"><span class="wf-shift err" title="違規：大夜後接早班，休息不足！">早 ⚠️</span></div>
+          <div class="wf-cell"><span class="wf-shift e">晚</span></div>
+          <div class="wf-cell"><span class="wf-shift e">晚</span></div>
+          <div class="wf-cell"><span class="wf-shift e">晚</span></div>
+          <div class="wf-cell">—</div>
+          <div class="wf-cell"><span class="wf-shift e">晚</span></div>
+          <!-- Row 3 -->
+          <div class="wf-cell header">王○○</div>
+          <div class="wf-cell"><span class="wf-shift e">晚</span></div>
+          <div class="wf-cell"><span class="wf-shift e">晚</span></div>
+          <div class="wf-cell"><span class="wf-shift n">大夜</span></div>
+          <div class="wf-cell"><span class="wf-shift n">大夜</span></div>
+          <div class="wf-cell"><span class="wf-shift n">大夜</span></div>
+          <div class="wf-cell"><span class="wf-shift n">大夜</span></div>
+          <div class="wf-cell">—</div>
+        </div>
+
+        <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:11px; color:var(--text-muted)">圖例：</span>
+          <span class="wf-shift m">早班 07-15</span>
+          <span class="wf-shift e">晚班 15-23</span>
+          <span class="wf-shift n">大夜 23-07</span>
+          <span class="wf-shift err">⚠️ 違規班</span>
+        </div>
+
+        <div class="alert-demo">
+          <div class="alert-item error">
+            <span class="alert-icon">🚫</span>
+            <div class="alert-text">
+              <strong>違規：休息時間不足</strong>
+              <span>林○○ 18日大夜班（結束07:00）→ 19日早班（07:00開始），兩班間休息時間為0小時，嚴重違反勞基法規定最少8小時休息。</span>
+            </div>
+          </div>
+          <div class="alert-item warn">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-text">
+              <strong>警告：每週工時接近上限</strong>
+              <span>陳○○ 本週累計工時已達 40小時，再加班將超出勞基法正常工時上限。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RULES -->
+<section class="section" id="rules">
+  <div class="container">
+    <div class="section-label">05 / VALIDATION ENGINE</div>
+    <h2 class="section-title">勞基法<span>驗證</span>規則</h2>
+    <div class="rules-grid">
+
+      <div class="rule-card">
+        <span class="rule-severity severity-error">ERROR</span>
+        <h4>連續工作超過6天</h4>
+        <p>嚴格禁止。計算連續工作天數（含大夜班跨日），若超過6天立即紅字報錯，禁止儲存。</p>
+        <div class="rule-ref">RULE_001 ｜ 勞基法§36 每七日至少一例假</div>
+      </div>
+
+      <div class="rule-card">
+        <span class="rule-severity severity-error">ERROR</span>
+        <h4>大夜後接早班（班別銜接不足）</h4>
+        <p>大夜班結束時間（07:00+1日）至下一班開始時間若不足8小時，系統嚴格禁止，顯示具體相差時間。</p>
+        <div class="rule-ref">RULE_002 ｜ 勞基法§35 連續工作≤4小時必有30分休息</div>
+      </div>
+
+      <div class="rule-card">
+        <span class="rule-severity severity-error">ERROR</span>
+        <h4>兩班間隔未達8小時</h4>
+        <p>任意兩班之間（含臨時班），休息時間不得低於8小時，系統自動計算並標記具體間隔時數。</p>
+        <div class="rule-ref">RULE_003 ｜ 勞基法§34 輪班換班間隔≥8小時</div>
+      </div>
+
+      <div class="rule-card">
+        <span class="rule-severity severity-error">ERROR</span>
+        <h4>分段工作超限（早4小時+後4小時）</h4>
+        <p>同日若出現上4小時、休4小時、再上4小時（分段工作），系統判斷實際工時超出一般班別，禁止此排法。</p>
+        <div class="rule-ref">RULE_004 ｜ 勞基法§30 正常工時規定</div>
+      </div>
+
+      <div class="rule-card">
+        <span class="rule-severity severity-error">ERROR</span>
+        <h4>單日工時超過12小時</h4>
+        <p>含加班在內，單日工作時間（含延長工時）不得超過12小時。系統計算同日所有班別的總時數。</p>
+        <div class="rule-ref">RULE_005 ｜ 勞基法§32 延長工時上限</div>
+      </div>
+
+      <div class="rule-card">
+        <span class="rule-severity severity-warn">WARN</span>
+        <h4>每週正常工時超過40小時</h4>
+        <p>每週一到日，累計正常工時超過40小時時顯示警告。超出部分為加班，需另行記錄加班費計算依據。</p>
+        <div class="rule-ref">RULE_006 ｜ 勞基法§30 每週工時上限</div>
+      </div>
+
+      <div class="rule-card">
+        <span class="rule-severity severity-warn">WARN</span>
+        <h4>每月加班超過46小時</h4>
+        <p>統計員工當月加班累計，逼近或超過46小時時警示加盟主注意，避免違法。</p>
+        <div class="rule-ref">RULE_007 ｜ 勞基法§32 每月延長工時上限</div>
+      </div>
+
+      <div class="rule-card">
+        <span class="rule-severity severity-error">ERROR</span>
+        <h4>國定假日未給假</h4>
+        <p>系統自動載入行事曆，國定假日排班時顯示錯誤提示，若仍安排出勤需明確標記為假日加班。</p>
+        <div class="rule-ref">RULE_008 ｜ 勞基法§37 國定假日</div>
+      </div>
+
+      <div class="rule-card">
+        <span class="rule-severity severity-warn">WARN</span>
+        <h4>連續工作滿4小時未安排休息</h4>
+        <p>若排班設計導致員工連續工作超過4小時無任何休息時段，系統提示需至少30分鐘休息。</p>
+        <div class="rule-ref">RULE_009 ｜ 勞基法§35 工作時間每4小時休息≥30分</div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:24px; background:var(--surface); border:1px solid rgba(232,0,45,0.3); padding:20px;">
+      <p style="font-size:13px; color:var(--text-muted);">
+        🔍 <strong style="color:var(--text)">驗證引擎架構建議：</strong>
+        所有規則集中在後端 <code style="color:var(--orange); font-family:'JetBrains Mono',monospace">ScheduleValidator</code> 服務，
+        前端在每次變更班表後呼叫驗證 API，即時回傳 violations 列表。
+        ERROR 等級阻擋儲存；WARN 等級顯示提示但允許儲存並需加盟主確認。
+        同時在班表格內紅框標記違規儲存格，hover 顯示詳細原因。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- TECH -->
+<section class="section" id="tech">
+  <div class="container">
+    <div class="section-label">06 / TECHNOLOGY</div>
+    <h2 class="section-title">技術<span>選型</span>建議</h2>
+    <div class="tech-grid">
+      <div class="tech-item">
+        <div class="tech-icon">⚛️</div>
+        <div>
+          <h4>React + TypeScript</h4>
+          <p>前端框架，元件化排班表格，強型別保障邏輯正確性</p>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">🗓️</div>
+        <div>
+          <h4>TanStack Table</h4>
+          <p>高效能可客製化的排班矩陣表格，支援虛擬捲動</p>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">📅</div>
+        <div>
+          <h4>FullCalendar / Day.js</h4>
+          <p>行事曆元件 + 日期運算，自動載入台灣國定假日</p>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">🟢</div>
+        <div>
+          <h4>Node.js + Express</h4>
+          <p>後端 API，驗證引擎核心邏輯在此層處理</p>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">🐘</div>
+        <div>
+          <h4>PostgreSQL</h4>
+          <p>關聯式資料庫，支援複雜的排班查詢與統計</p>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">🔐</div>
+        <div>
+          <h4>JWT + RBAC</h4>
+          <p>角色權限控管，管理員 / 加盟主資料隔離</p>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">🎨</div>
+        <div>
+          <h4>Tailwind CSS</h4>
+          <p>快速開發響應式UI，維持視覺一致性</p>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">📊</div>
+        <div>
+          <h4>ExcelJS + jsPDF</h4>
+          <p>班表匯出為 Excel / PDF，加盟主可列印張貼</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHASES -->
+<section class="section" id="phases">
+  <div class="container">
+    <div class="section-label">07 / ROADMAP</div>
+    <h2 class="section-title">開發<span>階段</span>規劃</h2>
+    <div class="phase-list">
+
+      <div class="phase-item">
+        <div class="phase-num">01</div>
+        <div>
+          <h3>基礎架構 & 帳號系統</h3>
+          <p>建立專案骨架、資料庫、管理員與加盟主登入/權限機制</p>
+          <div class="phase-tasks">
+            <span class="phase-task">資料庫 Schema 建立（全部資料表）</span>
+            <span class="phase-task">JWT 登入 / 登出 / 角色驗證中間件</span>
+            <span class="phase-task">管理員建立 / 管理加盟主帳號頁面</span>
+            <span class="phase-task">分店、員工 CRUD 介面</span>
+          </div>
+        </div>
+        <div class="phase-dur">Week 1–2</div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-num">02</div>
+        <div>
+          <h3>班別管理 & 行事曆整合</h3>
+          <p>固定班設定、臨時班自訂、台灣行事曆自動載入</p>
+          <div class="phase-tasks">
+            <span class="phase-task">固定班別管理頁（早、晚、大夜）</span>
+            <span class="phase-task">臨時班自訂介面（多筆、自訂時間名稱）</span>
+            <span class="phase-task">對接台灣政府行事曆 API（假日標記）</span>
+            <span class="phase-task">班別色彩設定功能</span>
+          </div>
+        </div>
+        <div class="phase-dur">Week 3</div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-num">03</div>
+        <div>
+          <h3>排班介面核心開發</h3>
+          <p>一週排班矩陣、拖曳/點選指派、草稿與發布機制</p>
+          <div class="phase-tasks">
+            <span class="phase-task">週排班矩陣介面（員工×日期×班別）</span>
+            <span class="phase-task">點選格子選擇班別快速指派</span>
+            <span class="phase-task">多分店 Tab 切換，員工依隸屬分店排序</span>
+            <span class="phase-task">草稿儲存 / 發布班表流程</span>
+          </div>
+        </div>
+        <div class="phase-dur">Week 4–5</div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-num">04</div>
+        <div>
+          <h3>勞基法驗證引擎</h3>
+          <p>9條規則全部實作，即時錯誤提示、違規高亮標記</p>
+          <div class="phase-tasks">
+            <span class="phase-task">ScheduleValidator 服務（後端規則引擎）</span>
+            <span class="phase-task">大夜跨日邏輯處理、連續天數算法</span>
+            <span class="phase-task">分段工作偵測（早4+休4+晚4）</span>
+            <span class="phase-task">前端即時錯誤面板 + 儲存格紅框標記</span>
+          </div>
+        </div>
+        <div class="phase-dur">Week 6</div>
+      </div>
+
+      <div class="phase-item">
+        <div class="phase-num">05</div>
+        <div>
+          <h3>匯出 & 小圖示生成</h3>
+          <p>班表 PDF/Excel 匯出，自動生成班表圖示與印刷版</p>
+          <div class="phase-tasks">
+            <span class="phase-task">班表匯出 Excel（含色彩格式化）</span>
+            <span class="phase-task">班表匯出 PDF（適合列印張貼）</span>
+            <span class="phase-task">整合 AI 圖示生成（班別小圖示）</span>
+            <span class="phase-task">測試、修bug、部署上線</span>
+          </div>
+        </div>
+        <div class="phase-dur">Week 7–8</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="container">
+    <div class="section-label">08 / FAQ</div>
+    <h2 class="section-title">常見<span>問題</span>解答</h2>
+
+    <details>
+      <summary>大夜班跨日時，連續工作天數如何計算？</summary>
+      <div class="details-body">
+        大夜班 (23:00→07:00) 在系統中以 work_date = 開始日期為主，但 actual_end 記錄為隔天07:00。計算「連續工作天數」時，以 work_date 為依據，連續 N 天的 work_date 不間斷即為連續工作 N 天。大夜班的隔天（actual_end 所在日）不另外計算為出勤日，除非員工當天又有另一班。
+      </div>
+    </details>
+
+    <details>
+      <summary>同一員工可以被排到不同分店嗎？</summary>
+      <div class="details-body">
+        可以。employees 表有 primary_store_id（主要隸屬分店），但 schedules 表有獨立的 store_id 欄位，可排到其他分店。排班介面預設優先顯示員工在自己隸屬分店，但加盟主可以手動指派至旗下其他分店。
+      </div>
+    </details>
+
+    <details>
+      <summary>臨時班可以設多筆，但會不會和固定班衝突？</summary>
+      <div class="details-body">
+        系統在儲存任何班別時都會檢查同一員工同一天的所有班別是否有時間重疊。若臨時班與固定班時間重疊，或兩筆臨時班重疊，系統會報錯阻止儲存。勞基法驗證引擎也會計算同一天所有班別的總時數。
+      </div>
+    </details>
+
+    <details>
+      <summary>行事曆假日資料從哪裡來？</summary>
+      <div class="details-body">
+        建議對接行政院人事行政總處每年公布的政府行政機關辦公日曆表（政府開放資料平台有提供 JSON/CSV），初次部署時匯入當年與次年假日資料至 holidays 表，並設定每年自動更新的排程任務。
+      </div>
+    </details>
+
+    <details>
+      <summary>管理員與加盟主的資料如何完全隔離？</summary>
+      <div class="details-body">
+        所有加盟主相關資料（stores、employees、schedules）都有 owner_id 外鍵關聯至 users 表。所有 API 查詢都必須加上 WHERE owner_id = :currentUserId 條件，後端 middleware 自動注入當前登入者的 user_id，確保加盟主 A 看不到加盟主 B 的任何資料。
+      </div>
+    </details>
+
+    <details>
+      <summary>小圖示如何自動生成？</summary>
+      <div class="details-body">
+        在後台班別設定頁，加盟主可以為每個班別點擊「生成圖示」按鈕，系統呼叫 AI 圖像 API（如 DALL-E 或 Stable Diffusion API），帶入班別名稱與時段關鍵字自動生成 SVG 或 PNG 小圖示，存入資料庫後顯示在班表格子與匯出文件中。
+      </div>
+    </details>
+
+  </div>
+</section>
+
+<footer>
+  <strong>7-ELEVEN 排班系統設計規劃</strong> v1.0<br>
+  本文件由 Claude 協助生成，供開發參考使用。所有規則應以最新版勞基法條文為準。
+</footer>
+
+</body>
+</html>
